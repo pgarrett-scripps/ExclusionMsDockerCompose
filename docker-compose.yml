@@ -1,0 +1,11 @@
+services:
+ fastapi:
+   image: pgarrettscripps/exclusion-ms-api
+   ports:
+     - "8000:8000"
+ streamlit:
+   image: pgarrettscripps/exclusion-ms-streamlit
+   ports:
+     - "8501:8501"
+   environment:
+     - EXCLUSION_MS_API_IP=localhost:8000

@@ -1,0 +1,11 @@
+
+# Deploy FastAPI and Streamlit containers
+1) login to the PaSER Box's portainer webpage
+2) add a new stack: exclusion-ms
+3) copy/paste the contents in docker-compose.yml to the stacks editor tab
+4) update the EXCLUSION_MS_API_IP ENV variable to be the IP of the PaSERbox
+5) deploy the stack
+
+# Modify PaSER Plugin
+1) pip install exclusionms
+2) update DDA plugin
