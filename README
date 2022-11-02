@@ -7,5 +7,20 @@
 5) deploy the stack
 
 # Modify PaSER Plugin
-1) pip install exclusionms
+1) pip install exclusionms to timsData
+1.5) duplicate paser folder
 2) update DDA plugin
+3) Fix python checksum in engine.ini
+4) python auto reimport
+
+# Remove checksum verification
+"C:\Program Files\Bruker\timsControl\engine\engine.ini"
+
+# Log files
+C:\BDalSystemData\timsTOF\log
+
+# PaSER plugin:
+C:\ProgramData\Bruker\Miniconda3\envs\timsEngine\Lib\site-packages\bdal\pasef\plugins\paser
+
+# PaSER key:
+{"pid":5451, "wid":3, "mode":"dda", "ms1":false, "exlist": {"exid":12345, "dynamic":true, "tolerance":{"exact_charge":false, "mass":"50", "rt":"None", "ook0":"None", "intensity":"None"}}}
