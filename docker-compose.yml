@@ -1,15 +1,18 @@
 services:
  exclusion-ms-fastapi:
    image: pgarrettscripps/exclusion-ms-api
+   restart: unless-stopped
    ports:
      - "8000:8000"
  exclusion-ms-streamlit:
    image: pgarrettscripps/exclusion-ms-streamlit
+   restart: unless-stopped
    ports:
      - "8501:8501"
    environment:
      - EXCLUSION_MS_API_IP=localhost:8000
  spectral-library-streamlit:
    image: pgarrettscripps/exclusion-ms-spectral-library-streamlit
+   restart: unless-stopped
    ports:
      - "8502:8501"
