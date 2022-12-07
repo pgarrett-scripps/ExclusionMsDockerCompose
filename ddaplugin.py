@@ -5,8 +5,10 @@ import time
 from threading import Lock
 
 from exclusionms.apihandler import load_active_exclusion_list, save_active_exclusion_list, get_exclusion_list_files, \
-    clear_active_exclusion_list, add_exclusion_interval_query, get_excluded_points
+    clear_active_exclusion_list, add_exclusion_interval, get_excluded_points
 from exclusionms.components import DynamicExclusionTolerance, IncorrectToleranceException, ExclusionPoint
+
+
 from .paserproducer.ddaproducer import DdaPasefProducer
 from .paserproducer.prddataclasses import MsMsInfo
 from .paserproducer.sampleinfo import has_key_pac_qualifier
@@ -25,11 +27,16 @@ def create_dda_pasef_plugin(paser_key_dict, config, requests_head, create_produc
 """
 ------------------  Exclusion-MS calculate_mass Start ------------------ 
 """
+
+
 def calculate_mass(mz: float, charge: int) -> float:
     return mz * charge - charge * 1.00727647
+
+
 """
 ------------------  Exclusion-MS calculate_mass Start ------------------ 
 """
+
 
 class DdaPasefPlugin:
     """
@@ -74,22 +81,26 @@ class DdaPasefPlugin:
         # create PAC worker, returns a queue where to push pac events to.
         self._pac_queue = create_pac_worker(config)
 
-
         """
         ------------------  Exclusion-MS Init Start ------------------ 
         """
-        #self._exclusion_api_ip = self._config.exclusion_api.ip
+        # self._exclusion_api_ip = self._config.exclusion_api.ip
         self._exclusion_api_ip = 'http://172.29.227.247:8000'
+        #self._exclusion_api_ip = 'http://100.110.246.118:8000'
+
         self._exid = None
         self._dynamic_tolerance = None
         if paser_key_dict.get('exlist'):
             self._exid = str(paser_key_dict.get('exlist').get('exid'))
-            if paser_key_dict.get('exlist').get('dynamic') is True and paser_key_dict.get('exlist').get('tolerance'):
+            if paser_key_dict.get('exlist').get('dynamic') == 'true' and paser_key_dict.get('exlist').get('tolerance'):
                 try:
                     self._dynamic_tolerance = DynamicExclusionTolerance.from_tolerance_dict(
                         paser_key_dict.get('exlist').get('tolerance'))
                 except IncorrectToleranceException as e:
                     _log.error(f'IncorrectToleranceException: {e}. Disabling dynamic exclusion')
+            else:
+                tol = paser_key_dict.get('exlist').get('tolerance')
+                _log.info(f'dynamic tolerance is false: {self._dynamic_tolerance}, or no tolerances: {tol}')
 
         _log.info(f'exid: {self._exid}, dynamic tolerance: {self._dynamic_tolerance}')
         """
@@ -246,11 +257,13 @@ class DdaPasefPlugin:
     """
     ------------------  Exclusion-MS process_candidates Start ------------------ 
     """
-    def process_candidates(self, candidates, make_candidate, enable_individual_collision_energies):
 
+    def process_candidates(self, candidates, make_candidate, enable_individual_collision_energies):
+        _log.info(f'Calling process_candidates with: {len(candidates)} candidates')
         with self._lock:
 
             if self._is_initialized is False or len(candidates) == 0:
+                _log.info(f'process_candidates: self._is_initialized: {self._is_initialized}. Skipping!')
                 return
 
             def is_candidate_valid(candidate) -> bool:
@@ -268,6 +281,8 @@ class DdaPasefPlugin:
                 candidates.pop(i)
 
             if len(candidates) == 0 or self._exid is None:
+                _log.info(
+                    f'process_candidates: len(candidates): {len(candidates)}, self._exid: {self._exid}. Skipping!')
                 return
 
             exclusion_points = []
@@ -287,12 +302,12 @@ class DdaPasefPlugin:
                 for i in sorted([i for i, flag in enumerate(exclusion_flags) if flag], reverse=True):
                     candidates.pop(i)
 
-
             except Exception as ex:
                 _log.error(f'exception when excluding candidates: {ex}')
             finally:
                 _log.info(f"starting candidates: {num_starting_candidates}, remaining candidates: {len(candidates)}")
                 _log.info("--- %s process_candidates time (seconds) ---" % round((time.time() - start_time), 4))
+
     """
     ------------------  Exclusion-MS process_candidates End ------------------ 
     """
@@ -358,6 +373,7 @@ class DdaPasefPlugin:
     """
     ------------------  Exclusion-MS _exclude_ms2_spec Start ------------------ 
     """
+
     def _exclude_ms2_spec(self, spectrum, ms2_spectrum_id, time_):
         precursor_mobility = 0.0
         if self._current_mob_trafo is not None:
@@ -367,7 +383,10 @@ class DdaPasefPlugin:
 
         mz = spectrum.precursor.monoisotopic_mz
         charge = spectrum.precursor.charge
-        ook0 = precursor_mobility[0]
+
+        ook0 = precursor_mobility
+        if type(precursor_mobility) is list:
+            ook0 = precursor_mobility[0]
         rt = time_
         intensity = spectrum.precursor.intensity
 
@@ -381,10 +400,11 @@ class DdaPasefPlugin:
         exclusion_interval = self._dynamic_tolerance.construct_interval(interval_id=interval_id,
                                                                         exclusion_point=exclusion_point)
         try:
-            add_exclusion_interval_query(exclusion_api_ip=self._exclusion_api_ip,
-                                         exclusion_interval=exclusion_interval)
+            add_exclusion_interval(exclusion_api_ip=self._exclusion_api_ip,
+                                   exclusion_interval=exclusion_interval)
         except Exception as ex:
             _log.error(f'Problem posing new dynamic interval {ex}')
+            _log.error(f'exclusion_interval: {exclusion_interval}')
 
     """
     ------------------  Exclusion-MS _exclude_ms2_spec End ------------------ 

@@ -8,7 +8,7 @@
 
 # Modify PaSER Plugin
 1) pip install exclusionms to timsData
-1.5) duplicate paser folder
+1.5) duplicate paser folder, rename to exclusionms
 2) update DDA plugin
 3) Fix python checksum in engine.ini
 4) python auto reimport
@@ -20,7 +20,7 @@
 C:\BDalSystemData\timsTOF\log
 
 # PaSER plugin:
-C:\ProgramData\Bruker\Miniconda3\envs\timsEngine\Lib\site-packages\bdal\pasef\plugins\paser
+C:\ProgramData\Bruker\Miniconda3\envs\timsEngine\Lib\site-packages\bdal\timstof\plugins\
 
 # PaSER key:
 {"pid":5451, "wid":3, "mode":"dda", "ms1":false, "exlist": {"exid":12345, "dynamic":true, "tolerance":{"exact_charge":false, "mass":"50", "rt":"None", "ook0":"None", "intensity":"None"}}}
